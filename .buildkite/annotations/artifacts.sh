@@ -20,10 +20,10 @@ artifact_links() {
   done
 }
 
-ARCH=("amd64" "arm" "arm64")
+ARCH=("amd64" "arm" "arm64" "loong64")
 TARGETS=("${ARCH[@]}" "public_html" "checksums")
 declare -A BUILDS=(
-  ["linux"]="amd64 arm arm64 amd64-musl arm-musl arm64-musl"
+  ["linux"]="amd64 arm arm64 loong64 amd64-musl arm-musl arm64-musl"
   ["freebsd"]="amd64"
 )
 

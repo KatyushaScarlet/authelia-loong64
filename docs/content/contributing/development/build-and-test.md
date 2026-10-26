@@ -149,7 +149,49 @@ CGO_ENABLED=1 CGO_CPPFLAGS="-D_FORTIFY_SOURCE=2 -fstack-protector-strong" CGO_LD
 go build -ldflags "-linkmode=external -s -w" -trimpath -buildmode=pie -o authelia ./cmd/authelia
 ```
 
+## Container Image
+
+The official container image is assembled by the [Dockerfile] in the root of the repository from two inputs:
+
+1. The binary built by [authelia-scripts] (or by [GoReleaser] for a release), staged in a directory named after the
+   target platform, e.g. `authelia-linux-amd64/authelia`.
+2. The `authelia/base` image, which is assembled by the [baseimage] repository and referenced by both a tag and a
+   digest.
+
+The image for the platform of the host you are building on can therefore be assembled with:
+
+```bash {title="Stage the binary"}
+mkdir -p "authelia-linux-$(go env GOOS)-$(go env GOARCH)"
+cp dist/authelia "authelia-linux-$(go env GOOS)-$(go env GOARCH)/"
+```
+
+```bash {title="Assemble the image"}
+docker buildx build \
+  --build-arg TAG=latest \
+  --build-arg SHA="$(docker buildx imagetools inspect authelia/base:latest --format '{{.Manifest.Digest}}' | cut -d: -f2)" \
+  --tag authelia/authelia:local .
+```
+
+The `TAG` and `SHA` build arguments are the tag and the digest of the `authelia/base` image index which the
+`Dockerfile` resolves for the target platform.
+
+The release pipeline assembles the image for every supported platform at once with
+`authelia-scripts docker build` and publishes the manifest list with `authelia-scripts docker push-manifest`.
+
+### LoongArch
+
+The `linux/loong64` image is published like the other platforms. Its base image is assembled from the [Debian]
+archive by `Dockerfile.loong64` in the [baseimage] repository because [Ubuntu] publishes no loong64 archive, and the
+`linux/loong64` target of [GoReleaser] is built with the `loongarch64-linux-gnu-gcc` cross compiler instead of one
+of the musl compilers, so the `-musl` archive is not published for it.
+
 [suites]: ./integration-suites.md
+[Dockerfile]: https://github.com/authelia/authelia/blob/master/Dockerfile
+[GoReleaser]: https://goreleaser.com/
+[authelia-scripts]: ../../reference/cli/authelia-scripts/authelia-scripts.md
+[baseimage]: https://github.com/authelia/baseimage
+[Ubuntu]: https://ubuntu.com/
+[Debian]: https://www.debian.org/
 [React]: https://reactjs.org/
 [go]: https://go.dev/dl/
 [Node.js]: https://nodejs.org/en/download/

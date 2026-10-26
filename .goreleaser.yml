@@ -40,6 +40,7 @@ builds:
       - amd64
       - arm
       - arm64
+      - loong64
     binary: '{{ .ProjectName }}'
     ldflags:
       - '-linkmode=external -s -w {{ .Env.XFLAGS }}'
@@ -48,6 +49,8 @@ builds:
         goarch: arm
       - goos: freebsd
         goarch: arm64
+      - goos: freebsd
+        goarch: loong64
     overrides:
       - goos: linux
         goarch: arm
@@ -57,6 +60,12 @@ builds:
         goarch: arm64
         env:
           - CC=aarch64-linux-gnu-gcc
+      # LoongArch is only distributed as a glibc build: there is no musl cross compiler for it, so the musl build
+      # above does not list the architecture. The cross compiler is the Debian package gcc-loongarch64-linux-gnu.
+      - goos: linux
+        goarch: loong64
+        env:
+          - CC=loongarch64-linux-gnu-gcc
       - goos: freebsd
         goarch: amd64
         env:
